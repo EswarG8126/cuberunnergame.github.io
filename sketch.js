@@ -109,7 +109,7 @@ function updateObstacles() {
             lives--;
             if (lives <= 0) {
                 alert("Game Over!");
-                lives = 3;
+                lives = 5;
                 score = 0;
                 obstacles.forEach(o => scene.remove(o));
                 obstacles = [];
