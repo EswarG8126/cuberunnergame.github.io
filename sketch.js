@@ -1,4 +1,4 @@
-let scene, camera, renderer, player;
+let scene, camera, renderer, player, listener;
 let obstacles = [], terrainSegments = [];
 let score = 0, lives = 5;
 let lane = 0; // -1, 0, 1 for left, middle, right
@@ -8,6 +8,7 @@ let velocityY = 0;
 const gravity = -0.1;
 const jumpStrength = 0.2;
 const groundY = 0.5;
+let bgMusic;
 
 
 const clock = new THREE.Clock();
@@ -29,6 +30,19 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // Music
+    listener = new THREE.AudioListener();
+    camera.add(listener);
+    bgMusic = new THREE.Audio(listener);
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('bgMusic.mp3', function(buffer) {
+        bgMusic.setBuffer(buffer);
+        bgMusic.setLoop(true);
+        bgMusic.setVolume(0.5);
+      });
+    
+    
+
     // Light
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(0, 10, 5);
@@ -46,15 +60,20 @@ function init() {
 
     // Controls
     document.addEventListener("keydown", e => {
+        if (!bgMusic.isPlaying) {
+          bgMusic.play().catch(err => {
+            console.warn("Audio play failed:", err);
+          });
+        }
+      
         if (e.code === "ArrowLeft") lane = Math.max(-1, lane - 1);
-        if (e.code === "ArrowRight") lane = Math.min(1, lane + 1);
-        if (e.code === "Space" && !isJumping) {
-            velocityY = jumpStrength;
-            isJumping = true;
+        else if (e.code === "ArrowRight") lane = Math.min(1, lane + 1);
+        else if (e.code === "Space" && !isJumping) {
+          velocityY = jumpStrength;
+          isJumping = true;
         }
     });
     
-
     animate();
 }
 
@@ -109,6 +128,11 @@ function updateObstacles() {
             lives--;
             if (lives <= 0) {
                 alert("Game Over!");
+              
+                if (bgMusic.isPlaying) {
+                  bgMusic.stop();
+                }
+              
                 lives = 5;
                 score = 0;
                 obstacles.forEach(o => scene.remove(o));
@@ -147,7 +171,3 @@ function animate() {
     document.getElementById("hud").innerText = `Score: ${score} | Lives: ${lives}`;
     renderer.render(scene, camera);
 }
-
-window.addEventListener("click", () => {
-    document.getElementById("bg-music").play();
-}, { once: true });
